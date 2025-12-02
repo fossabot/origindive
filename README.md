@@ -58,11 +58,12 @@ This tool sends HTTP requests directly to IP addresses with your target domain i
 
 ### Advanced Features
 - ⚡ **Multi-threaded scanning** for faster results
+- 📊 **Real-time progress bar** with percentage, ETA, and scan rate
 - 🎨 **Colored terminal output** (with plain-text mode for scripts)
 - 📁 **Save results to file** for later analysis
 - 🔧 **Custom HTTP headers** and methods
 - ⏱️ **Configurable timeouts** for both connection and requests
-- 📊 **Detailed scan statistics** including success rate and timing
+- 📈 **Detailed scan statistics** including success rate and timing
 - 🔍 **Response filtering** (show all responses or just 200 OK)
 - 🤫 **Quiet mode** for minimal output
 
@@ -178,6 +179,9 @@ EOF
 # Use HEAD method instead of GET
 ./originfind -d example.com -n 192.168.1.0/24 -m HEAD
 
+# Disable User-Agent header for stealth scanning
+./originfind -d example.com -n 192.168.1.0/24 --no-ua
+
 # Combine with increased timeout
 ./originfind -d example.com -n 192.168.1.0/24 -t 10 -c 5
 ```
@@ -206,6 +210,8 @@ EOF
 | `-o` | `--output` | Save results to file | - |
 | `-H` | `--header` | Add custom HTTP header | - |
 | `-m` | `--method` | HTTP method (GET, HEAD, POST) | GET |
+| | `--no-ua` | Disable User-Agent header | false |
+| | `--no-progress` | Disable progress bar | false |
 | `-a` | `--show-all` | Show all responses (not just 200) | false |
 | `-v` | `--verbose` | Verbose output | false |
 | `-q` | `--quiet` | Quiet mode (minimal output) | false |
@@ -343,7 +349,41 @@ Combined with services like SecurityTrails or Shodan:
 ./originfind -d target.com -i historical-ips.txt
 ```
 
-## ⚡ Performance Tips
+## 📊 Progress Tracking
+
+### Real-time Progress Bar
+By default, originfind displays a real-time progress bar during scans showing:
+
+```
+[████████████████████████░░░░░░░░░░░░░░░░] 61.5% | 157/255 IPs | 52.3 IPs/s | Elapsed: 3s | ETA: 2s
+```
+
+**Progress Information Includes:**
+- **Visual Bar**: Unicode-based progress indicator
+- **Percentage**: Completion percentage (0-100%)
+- **IPs Scanned**: Current count vs. total IPs (e.g., 157/255)
+- **Scan Rate**: Real-time throughput in IPs per second
+- **Elapsed Time**: Time since scan started
+- **ETA**: Estimated time to completion
+
+### Disable Progress Bar
+Use `--no-progress` flag for cleaner output:
+
+```bash
+# Disable progress bar (useful for piping or logging)
+./originfind -d example.com -n 192.168.1.0/24 --no-progress
+
+# Combine with quiet mode for minimal output (only 200 OK results)
+./originfind -d example.com -i targets.txt -q --no-progress
+```
+
+**When to disable progress:**
+- Piping output to other tools
+- Logging to files (use with `-o` flag)
+- Running in automation/scripts
+- Terminal doesn't support ANSI escape codes
+
+## 🚀 Performance Tips
 
 ### Thread Recommendations
 

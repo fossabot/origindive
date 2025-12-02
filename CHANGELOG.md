@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [2.6.0] - 2025-12-02
+
+### Added
+- **Real-time Progress Bar**: Live progress tracking during scans
+  - Visual progress bar with percentage completion
+  - IPs scanned counter (current/total)
+  - Scan rate display (IPs per second)
+  - Elapsed time tracker
+  - Estimated Time of Arrival (ETA) calculation
+  - Updates every 100ms for smooth display
+- `--no-progress` flag to disable progress bar for minimal output
+- `--no-ua` flag to disable User-Agent header for stealth scanning
+
+### Changed
+- Progress bar automatically clears before displaying scan results
+- Progress display respects `--quiet` mode
+
 ## [2.5.0] - 2025-12-02
 
 ### Added
@@ -131,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **Unreleased**: User-Agent disable flag
 - **2.5.0**: CIDR mask application + comprehensive documentation
 - **2.4.0**: Full color support for WSL/Kali environments
 - **2.3.0**: Positional arguments + dynamic versioning

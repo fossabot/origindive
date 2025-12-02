@@ -33,6 +33,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -44,7 +45,7 @@ import (
 )
 
 // Version of the application
-const version = "2.5.0"
+const version = "2.6.0"
 
 // =============================================================================
 // CLI FLAGS
@@ -65,6 +66,7 @@ var (
 	connectTimeout = flag.Int("c", 3, "TCP connection timeout in seconds")
 	customHeader   = flag.String("H", "", "Custom HTTP header (format: \"Name: value\")")
 	httpMethod     = flag.String("m", "GET", "HTTP method (GET, HEAD, POST)")
+	noUserAgent    = flag.Bool("no-ua", false, "Disable User-Agent header")
 
 	// Performance configuration
 	threads = flag.Int("j", 1, "Number of parallel workers (recommended: 5-20)")
@@ -75,6 +77,7 @@ var (
 	saveOutput  = flag.String("o", "", "Save results to file")
 	plain       = flag.Bool("p", false, "Plain text output - no colors")
 	noColorFlag = flag.Bool("no-color", false, "Disable colored output")
+	noProgress  = flag.Bool("no-progress", false, "Disable progress bar")
 
 	// Information flags
 	showVersion = flag.Bool("V", false, "Show version and exit")
@@ -387,6 +390,58 @@ func parseInputFile(filename string, cidrMask string) ([][2]uint32, error) {
 }
 
 // =============================================================================
+// PROGRESS DISPLAY
+// =============================================================================
+
+// displayProgress shows a real-time progress bar with scan statistics
+// Parameters:
+//   - scanned: number of IPs scanned so far
+//   - total: total number of IPs to scan
+//   - startTime: when the scan started
+//   - quiet: whether to suppress output
+//   - noProgress: whether to disable progress display
+func displayProgress(scanned, total uint64, startTime time.Time, quiet, noProgress bool) {
+	if quiet || noProgress || total == 0 {
+		return
+	}
+
+	elapsed := time.Since(startTime).Seconds()
+	percent := float64(scanned) / float64(total) * 100
+	rate := float64(scanned) / elapsed
+
+	// Calculate ETA
+	var eta string
+	if scanned > 0 && rate > 0 {
+		remaining := float64(total-scanned) / rate
+		if remaining < 60 {
+			eta = fmt.Sprintf("%.0fs", remaining)
+		} else if remaining < 3600 {
+			eta = fmt.Sprintf("%.0fm%.0fs", remaining/60, math.Mod(remaining, 60))
+		} else {
+			eta = fmt.Sprintf("%.0fh%.0fm", remaining/3600, math.Mod(remaining/60, 60))
+		}
+	} else {
+		eta = "--"
+	}
+
+	// Progress bar (40 characters wide)
+	barWidth := 40
+	filledWidth := int(float64(barWidth) * percent / 100)
+	bar := strings.Repeat("█", filledWidth) + strings.Repeat("░", barWidth-filledWidth)
+
+	// Format output
+	fmt.Printf("\r%s[%s]%s %s%.1f%%%s | %s%d%s/%s%d%s IPs | %s%.1f%s IPs/s | Elapsed: %s%.0fs%s | ETA: %s%s%s",
+		CYAN, bar, NC,
+		BOLD, percent, NC,
+		GREEN, scanned, NC,
+		BOLD, total, NC,
+		MAGENTA, rate, NC,
+		BLUE, elapsed, NC,
+		YELLOW, eta, NC,
+	)
+}
+
+// =============================================================================
 // SCANNING LOGIC
 // =============================================================================
 
@@ -434,7 +489,11 @@ func worker(ctx context.Context, wg *sync.WaitGroup, jobs <-chan uint32, results
 
 			// Set Host header to target domain (this is the key to finding origin)
 			req.Host = domain
-			req.Header.Set("User-Agent", fmt.Sprintf("originfind/%s", version))
+
+			// Set User-Agent unless disabled
+			if !*noUserAgent {
+				req.Header.Set("User-Agent", fmt.Sprintf("originfind/%s", version))
+			}
 
 			// Add custom header if provided
 			if header != "" {
@@ -721,6 +780,24 @@ func main() {
 	var resultsLock sync.Mutex
 	var printedLines []string
 
+	// Start time for progress calculation
+	startTime := time.Now()
+
+	// Start progress display goroutine
+	progressDone := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-progressDone:
+				return
+			case <-ticker.C:
+				displayProgress(atomic.LoadUint64(&totalScanned), ipCount, startTime, *quiet, *noProgress)
+			}
+		}
+	}()
+
 	collectorDone := make(chan struct{})
 	go func() {
 		for res := range results {
@@ -759,6 +836,10 @@ func main() {
 
 			// Output line if not quiet and line is non-empty (either success or showAll)
 			if line != "" && !*quiet {
+				if !*noProgress {
+					// Clear progress bar before printing result
+					fmt.Print("\r" + strings.Repeat(" ", 120) + "\r")
+				}
 				fmt.Println(line)
 			}
 			// Save to output file (cleaner format like bash script)
@@ -782,7 +863,6 @@ func main() {
 	}()
 
 	// Feed jobs from all IP ranges
-	startTime := time.Now()
 	go func() {
 		for _, r := range ipRanges {
 			for ip := r[0]; ip <= r[1]; ip++ {
@@ -797,6 +877,15 @@ func main() {
 	// All workers done, close results channel and wait for collector
 	close(results)
 	<-collectorDone
+
+	// Stop progress display
+	close(progressDone)
+
+	// Clear progress bar
+	if !*quiet && !*noProgress {
+		fmt.Print("\r" + strings.Repeat(" ", 120) + "\r")
+	}
+
 	endTime := time.Now()
 	elapsed := endTime.Sub(startTime).Seconds()
 
