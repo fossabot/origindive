@@ -9,11 +9,10 @@
             /____/
 ```
 
-**Origin IP Finder** - A powerful security analysis tool for discovering real origin server IPs hidden behind CDN/WAF services like Cloudflare, Akamai, and others.
+A powerful security analysis tool for discovering real origin server IPs hidden behind CDN/WAF services like Cloudflare, Akamai, and others.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/badge/Go-1.16+-blue.svg)](https://golang.org/)
-[![Bash](https://img.shields.io/badge/Bash-4.0+-green.svg)](https://www.gnu.org/software/bash/)
 
 ## 📋 Table of Contents
 
@@ -47,10 +46,6 @@ This tool sends HTTP requests directly to IP addresses with your target domain i
 
 ## ✨ Features
 
-### Dual Implementation
-- **Go Version**: Fast, compiled binary with excellent performance
-- **Bash Version**: Cross-platform shell script with minimal dependencies
-
 ### Input Flexibility
 - **IP Range**: Scan from start IP to end IP (e.g., `192.168.1.1` - `192.168.1.254`)
 - **CIDR Notation**: Scan entire subnets (e.g., `192.168.1.0/24`)
@@ -68,12 +63,10 @@ This tool sends HTTP requests directly to IP addresses with your target domain i
 
 ## 🚀 Installation
 
-### Go Version (Recommended)
-
-#### Prerequisites
+### Prerequisites
 - Go 1.16 or higher
 
-#### Build from Source
+### Build from Source
 ```bash
 # Clone the repository
 git clone https://github.com/jhaxce/originfind.git
@@ -89,27 +82,8 @@ sudo mv originfind /usr/local/bin/
 # Move originfind.exe to a directory in your PATH
 ```
 
-#### Pre-built Binaries
+### Pre-built Binaries
 Download the latest release from the [Releases](https://github.com/jhaxce/originfind/releases) page.
-
-### Bash Version
-
-The bash script requires no compilation:
-
-```bash
-# Make executable
-chmod +x originfind.sh
-
-# Optional: Install system-wide (Linux/macOS)
-sudo mv originfind.sh /usr/local/bin/originfind
-
-# Run
-./originfind.sh -h
-```
-
-#### Dependencies (Bash Version)
-- `curl` - for HTTP requests
-- `bash` 4.0+ - shell environment
 
 ## 📖 Usage
 
@@ -117,11 +91,10 @@ sudo mv originfind.sh /usr/local/bin/originfind
 
 #### Scan an IP Range
 ```bash
-# Go version
 ./originfind example.com 192.168.1.1 192.168.1.254
 
-# Bash version
-./originfind.sh -d example.com -s 192.168.1.1 -e 192.168.1.254
+# Or with flags
+./originfind -d example.com -s 192.168.1.1 -e 192.168.1.254
 ```
 
 #### Scan a CIDR Subnet
