@@ -1,6 +1,6 @@
 // originfind.go
 //
-// Origin IP Finder - Security Analysis Tool
+// originfind - Security Analysis Tool
 // Author: jhaxce
 // Purpose: Find origin servers behind WAF/CDN by checking IPs with custom Host header
 // Build: go build -o originfind originfind.go
@@ -87,7 +87,7 @@ func usage() {
 \____/_/  /_/\__, /_/_/ /_/_/ /_/_/ /_/\__,_/   
             /____/
 
-%sOrigin IP Finder v%s - Security Tool%s
+%soriginfind v%s - Security Tool%s
 %sFind origin servers behind WAF/CDN (Cloudflare, Akamai, etc.)%s
 %s════════════════════════════════════════════════════════════════%s
 
@@ -310,7 +310,7 @@ func main() {
 		return
 	}
 	if *showVersion {
-		fmt.Printf("Origin IP Finder %s\n", version)
+		fmt.Printf("originfind v%s\n", version)
 		return
 	}
 
@@ -441,7 +441,7 @@ func main() {
 	if !*quiet {
 		fmt.Println()
 		fmt.Println("════════════════════════════════════════════════════════════")
-		fmt.Printf("Origin IP Finder %s\n", version)
+		fmt.Printf("originfind v%s\n", version)
 		fmt.Println("════════════════════════════════════════════════════════════")
 		fmt.Printf("[*] Domain: %s\n", *domain)
 		if *inputFile != "" {
