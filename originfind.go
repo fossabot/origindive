@@ -49,7 +49,7 @@ import (
 )
 
 // Version of the application
-const version = "2.6.1"
+const version = "2.6.2"
 
 // =============================================================================
 // CLI FLAGS
@@ -555,14 +555,45 @@ func downloadUpdate(release *GitHubRelease) error {
 		return fmt.Errorf("failed to backup current binary: %w", err)
 	}
 
-	// Replace with new binary
-	if err := os.Rename(tmpBinary, exePath); err != nil {
-		// Try to restore backup
-		os.Rename(backupFile, exePath)
-		return fmt.Errorf("failed to replace binary: %w", err)
+	// Copy new binary to final location (use copy instead of rename for cross-filesystem support)
+	srcFile, err := os.Open(tmpBinary)
+	if err != nil {
+		os.Rename(backupFile, exePath) // Restore backup
+		os.Remove(tmpBinary)
+		return fmt.Errorf("failed to open new binary: %w", err)
 	}
 
-	// Remove backup on success
+	dstFile, err := os.Create(exePath)
+	if err != nil {
+		srcFile.Close()
+		os.Rename(backupFile, exePath) // Restore backup
+		os.Remove(tmpBinary)
+		return fmt.Errorf("failed to create new binary: %w", err)
+	}
+
+	_, err = io.Copy(dstFile, srcFile)
+	srcFile.Close()
+	dstFile.Close()
+
+	if err != nil {
+		os.Remove(exePath)
+		os.Rename(backupFile, exePath) // Restore backup
+		os.Remove(tmpBinary)
+		return fmt.Errorf("failed to copy new binary: %w", err)
+	}
+
+	// Make it executable on Unix-like systems
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(exePath, 0755); err != nil {
+			os.Remove(exePath)
+			os.Rename(backupFile, exePath) // Restore backup
+			os.Remove(tmpBinary)
+			return fmt.Errorf("failed to set executable permission: %w", err)
+		}
+	}
+
+	// Cleanup
+	os.Remove(tmpBinary)
 	os.Remove(backupFile)
 
 	fmt.Printf("%s[✓]%s Successfully updated to %s\n", GREEN, NC, release.TagName)
