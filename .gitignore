@@ -13,9 +13,12 @@
 
 # Code coverage profiles and other test artifacts
 *.out
+coverage
 coverage.*
 *.coverprofile
 profile.cov
+c
+**/c
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -32,4 +35,5 @@ go.work.sum
 # .vscode/
 
 # AI generated files
-*-instructions.md
+copilot-instructions.md
+docs/

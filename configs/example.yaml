@@ -1,7 +1,26 @@
-# origindive Configuration File
-# Save as: origindive.yaml
+# origindive Scan Configuration File
+# ============================================================
+# This is for PER-SCAN configuration (target-specific settings)
+# Use this to configure individual scans/projects
+# ============================================================
+#
+# DIFFERENCE FROM GLOBAL CONFIG:
+#   - THIS FILE: Target domain, IP ranges, output file (per-scan)
+#   - GLOBAL CONFIG: API keys, default preferences (persistent)
+#
+# WORKFLOW:
+#   1. Create global config once: origindive --init-config
+#      → Stores API keys in ~/.config/origindive/config.yaml
+#   2. Create scan configs for each target (this file)
+#      → Save as: target-name.yaml (e.g., nbi.yaml, example.yaml)
+#   3. Run: origindive --config target-name.yaml
+#      → Tool loads global config + scan config (scan overrides global)
+#
+# Global config location:
+#   Linux/macOS: ~/.config/origindive/config.yaml
+#   Windows: %USERPROFILE%\.config\origindive\config.yaml
 
-# Target domain
+# Target domain (REQUIRED for this scan)
 domain: "example.com"
 
 # Scan mode: passive, active, or auto
@@ -12,13 +31,27 @@ mode: "auto"
 # start_ip: "192.168.1.1"
 # end_ip: "192.168.1.254"
 # input_file: "ips.txt"
+# asn: "AS4775"  # Automatically fetches IP ranges for this ASN
+# asn: "AS4775,AS9299,AS10139"  # Multiple ASNs (comma-separated)
 
 # HTTP configuration
 http_method: "GET"
 timeout: "5s"
 connect_timeout: "3s"
 # custom_header: "X-Custom: value"
+# user_agent: "random"  # Options: random, chrome, firefox, safari, edge, opera, brave, mobile, or custom string
 no_user_agent: false
+
+# Proxy configuration
+# proxy_url: "http://127.0.0.1:8080"  # Single proxy (HTTP or SOCKS5)
+# proxy_url: "socks5://127.0.0.1:1080"  # SOCKS5 example
+# proxy_auto: true  # Auto-fetch from public proxy lists + Webshare.io
+# proxy_rotate: true  # Rotate through proxy list
+# proxy_test: true  # Test proxies before use (default: true)
+
+# Webshare.io premium proxy integration
+# webshare_api_key: "YOUR_API_TOKEN"  # Get from https://proxy.webshare.io/
+# webshare_plan_id: "12354579"  # Optional, for download endpoint
 
 # Performance
 workers: 10
@@ -44,6 +77,12 @@ passive_sources:
   # - censys
 
 # API Keys (optional, for passive sources)
+# ⚠️  NOT RECOMMENDED: Store API keys here (insecure, duplicates across scans)
+# ✅  RECOMMENDED: Store in global config instead (secure, reusable)
+#    Run: origindive --init-config
+#    Then add keys to ~/.config/origindive/config.yaml
+#
+# Only use these if you need scan-specific API keys:
 # shodan_key: "YOUR_SHODAN_API_KEY"
 # censys_id: "YOUR_CENSYS_ID"
 # censys_secret: "YOUR_CENSYS_SECRET"

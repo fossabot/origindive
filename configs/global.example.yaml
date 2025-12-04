@@ -1,0 +1,154 @@
+# origindive Global Configuration
+# This file stores persistent settings like API keys and preferences
+# Default location:
+#   Linux/macOS: ~/.config/origindive/config.yaml
+#   Windows: %USERPROFILE%\.config\origindive\config.yaml
+#
+# Copy this file to the location above and customize with your settings
+
+# ============================================================
+# Premium Proxy Service API Keys
+# ============================================================
+
+# Webshare.io (https://www.webshare.io/)
+# Premium datacenter and residential proxies with high reliability
+# Free tier: 10 proxies with limited bandwidth
+# Paid plans: $1.38/GB datacenter, $2.99/GB residential
+# Get API key: https://proxy2.webshare.io/userapi/credentials
+# Example account: jake.hlink@gmail.com
+webshare_keys:
+  - "YOUR_WEBSHARE_API_KEY_HERE"
+  # - "BACKUP_KEY_FOR_ROTATION"
+
+# Optional: Plan IDs (maps 1:1 with webshare_keys)
+# Only needed if using multiple plans with different keys
+# webshare_plan_ids:
+#   - "plan-id-for-first-key"
+#   - "plan-id-for-second-key"
+
+# ============================================================
+# API Keys (Persistent - set once, use for all scans)
+# Multiple keys per service for automatic rotation/failover
+# ============================================================
+
+# Shodan API keys (https://account.shodan.io/)
+# Add multiple keys - tool will rotate through them when one hits rate limit
+# Used for: IP lookups, port scanning history, service detection
+shodan_keys:
+  - "YOUR_FIRST_SHODAN_KEY_HERE"
+  - "YOUR_SECOND_SHODAN_KEY_HERE"
+  # - "YOUR_THIRD_SHODAN_KEY_HERE"
+
+# Censys API credentials (https://search.censys.io/account/api)
+# Get your Personal Access Token (PAT) from the API settings page
+# PAT tokens use Bearer authentication (no API ID needed)
+# For paid plans: Add your organization_id for higher rate limits
+# Used for: Certificate searches, IP lookups, service detection
+censys_tokens:
+  - "YOUR_FIRST_CENSYS_PAT_HERE"
+  - "YOUR_SECOND_CENSYS_PAT_HERE"
+  # - "YOUR_THIRD_CENSYS_PAT_HERE"
+
+# Censys Organization ID (optional, for paid plans only)
+# Find your org ID at: https://search.censys.io/account/organization
+# Free tier users: Leave empty or omit this field
+censys_org_id: ""  # e.g., "11111111-2222-3333-4444-555555555555"
+
+# Webshare.io Proxy API keys (https://proxy2.webshare.io/userapi/credentials)
+# Premium proxy service with high-quality datacenter and residential IPs
+# Free tier: 10 proxies with limited bandwidth
+# Paid plans: $1.38/GB datacenter, $2.99/GB residential
+# Used for: HTTP scanning through premium proxies (--proxy-auto flag)
+webshare_keys:
+  - "YOUR_WEBSHARE_API_KEY_HERE"
+  # - "BACKUP_WEBSHARE_API_KEY"
+
+# Webshare Plan IDs (optional, maps 1:1 with webshare_keys)
+# Only needed if using multiple plans with different keys
+# Leave empty for single key usage
+# webshare_plan_ids:
+#   - "plan-id-for-first-key"
+#   - "plan-id-for-second-key"
+
+# ============================================================
+# Global Defaults (Override per-scan with CLI flags or scan config)
+# Set these once, use for all scans unless overridden
+# ============================================================
+
+# HTTP Configuration
+http_method: "GET"
+timeout: "5s"
+connect_timeout: "3s"
+no_user_agent: false
+
+# Performance
+workers: 20  # Number of concurrent workers (1-1000)
+
+# WAF Filtering
+skip_waf: true  # Skip CDN/WAF IP ranges
+skip_providers:  # Specific providers to skip
+  - cloudflare
+  - aws-cloudfront
+  - fastly
+  - akamai
+  - incapsula
+  - sucuri
+show_skipped: false  # Show skipped IPs in output
+no_waf_update: false  # Disable WAF database auto-update
+
+# Passive Sources
+passive_sources:
+  - ct        # Certificate Transparency logs (free, no key needed)
+  - dns       # DNS history (free, no key needed)
+  - shodan    # Shodan (requires API key)
+  - censys    # Censys (requires API credentials)
+min_confidence: 0.7  # Minimum confidence score (0.0-1.0)
+
+# Output
+format: "text"  # text, json, or csv
+quiet: false
+verbose: false
+no_color: false
+no_progress: false
+
+# ============================================================
+# API Failover Configuration
+# ============================================================
+
+api_failover:
+  # Enable automatic failover to next available API when one fails
+  enabled: true
+  
+  # Skip source if rate limited (otherwise wait for cooldown)
+  skip_on_rate_limit: true
+  
+  # Retry source after cooldown period expires
+  retry_after_cooldown: false
+
+# ============================================================
+# Example Usage
+# ============================================================
+# 
+# 1. Set your API keys above
+# 2. Save this file to the global config location
+# 3. Run scans without specifying API keys:
+#    origindive -d example.com --passive
+#
+# 4. The tool will:
+#    - Load all settings from this file automatically
+#    - Load API keys and rotate through them
+#    - Validate each API before using it
+#    - When API hits rate limit, switch to next key automatically
+#    - Skip APIs that are invalid or all keys exhausted
+#    - Use your global defaults for all settings
+#
+# 5. Override defaults per-scan:
+#    origindive -d example.com --passive -j 50 --format json
+#
+# 6. API Key Rotation Example:
+#    - shodan_keys has 3 keys
+#    - First key hits rate limit → automatically switch to second key
+#    - Second key hits rate limit → switch to third key
+#    - Third key hits rate limit → skip Shodan, use other sources
+#    - After cooldown period → retry with first key
+#
